@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>环境监测系统 - 登录</title>
+    <!-- 引入Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 30px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        .login-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #0a2a5a;
+        }
+        .form-control:focus {
+            border-color: #0a2a5a;
+            box-shadow: 0 0 0 0.25rem rgba(10, 42, 90, 0.25);
+        }
+        .btn-login {
+            background-color: #0a2a5a;
+            border: none;
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .btn-login:hover {
+            background-color: #1a4a8a;
+        }
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .error-message {
+            color: #dc3545;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="login-container">
+            <h2 class="login-title">环境监测系统</h2>
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label for="username" class="form-label">用户名</label>
+                    <input type="text" class="form-control" id="username" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">密码</label>
+                    <input type="password" class="form-control" id="password" required>
+                </div>
+                <div id="errorMessage" class="error-message"></div>
+                <button type="submit" class="btn btn-primary btn-login">登录</button>
+            </form>
+            <div class="register-link">
+                还没有账号? <a href="#" id="registerLink">立即注册</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入jQuery和Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // 登录表单提交
+            $('#loginForm').submit(function(e) {
+                e.preventDefault();
+                
+                const username = $('#username').val();
+                const password = $('#password').val();
+                
+                // 清除之前的错误信息
+                $('#errorMessage').hide().text('');
+                
+                // 发送登录请求
+                $.ajax({
+                    url: '/api/auth/login',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        username: username,
+                        password: password
+                    }),
+                    success: function(response) {
+                        // 登录成功，保存token并跳转到首页
+                        localStorage.setItem('token', response.token);
+                        window.location.href = '/index.html';
+                    },
+                    error: function(xhr) {
+                        // 显示错误信息
+                        const errorMessage = xhr.responseJSON?.error || '登录失败';
+                        $('#errorMessage').text(errorMessage).show();
+                    }
+                });
+            });
+            
+            // 注册链接点击事件
+            $('#registerLink').click(function(e) {
+                e.preventDefault();
+                alert('注册功能将在下一步实现');
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>环境监测系统 - 控制台</title>
+    <!-- 引入Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 引入Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .sidebar {
+            background-color: #0a2a5a;
+            color: white;
+            height: 100vh;
+            position: fixed;
+            padding-top: 20px;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 5px;
+        }
+        .sidebar .nav-link:hover {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .sidebar .nav-link.active {
+            color: white;
+            background-color: #1a4b8c;
+            border-left: 4px solid #4dabf7;
+            font-weight: 500;
+        }
+        .sidebar .nav-item {
+            padding: 5px 0;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: #0a2a5a;
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        .status-indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .status-normal {
+            background-color: #28a745;
+        }
+        .status-warning {
+            background-color: #ffc107;
+        }
+        .status-critical {
+            background-color: #dc3545;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #6c757d;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">燃气管道监测系统</a>
+            <div class="user-info ms-auto"></div>
+                <div class="user-avatar" id="userAvatar">U</div>
+                <span id="usernameDisplay">用户名</span>
+                <button class="btn btn-sm btn-outline-light ms-3" id="logoutBtn">登出</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 侧边栏 -->
+    <div class="sidebar col-md-2 d-none d-md-block">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                    <a class="nav-link active bg-blue-900 text-white font-semibold" href="#">
+                    <i class="fas fa-bell me-2"></i>控制台
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="fas fa-chart-line me-2"></i>数据分析
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="fas fa-chart-line me-2"></i>警报管理
+
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="fas fa-cog me-2"></i>系统设置
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main-content" style="margin-left: 290px; padding: 40px;">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="mb-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-chart-pie me-3 text-primary" style="font-size: 2.2rem;"></i>
+                        <div>
+                            <h1 class="m-0" style="font-size: 2.2rem; font-weight: 700; color: #0a2a5a;">燃气管道监测概览</h1>
+                        </div>
+                    </div>
+                </div>
+                <hr class="my-4" style="border-top: 2px solid rgba(0,0,0,0.1);">
+            </div>
+        </div>
+
+        <!-- 数据卡片 -->
+        <div class="row g-4 mb-4">
+            <div class="col-12 col-lg-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center border-bottom py-3">
+                        <h5 class="card-title mb-0 fw-bold text-gray-800">燃气浓度监测</h5>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-secondary rounded-start-pill px-3">24小时</button>
+                            <button class="btn btn-sm btn-outline-secondary rounded-end-pill px-3">7天</button>
+                        </div>
+                    </div>
+                    <div class="card-body position-relative" style="min-height: 300px;">
+                        <canvas id="aqiChart" height="150"></canvas>
+                        <div id="aqiNoData" class="position-absolute top-50 start-50 translate-middle text-center d-none">
+                            <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">暂无燃气浓度数据</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center border-bottom py-3">
+                        <h5 class="card-title mb-0 fw-bold text-gray-800">温湿度监测</h5>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-secondary rounded-start-pill px-3">24小时</button>
+                            <button class="btn btn-sm btn-outline-secondary rounded-end-pill px-3">7天</button>
+                        </div>
+                    </div>
+                    <div class="card-body position-relative" style="min-height: 300px;">
+                        <canvas id="tempHumidityChart" height="150"></canvas>
+                        <div id="tempHumidityNoData" class="position-absolute top-50 start-50 translate-middle text-center d-none">
+                            <i class="fas fa-thermometer-half fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">暂无温湿度数据</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 警报列表 -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">最新警报</h5>
+                            <span class="badge bg-danger" id="alertCount">0 条未处理</span>
+                        </div>
+                    </div>
+                    <div class="card-body position-relative" style="min-height: 300px;">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle" id="alertsTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="py-3 ps-4">站点ID</th>
+                                        <th class="py-3">警报类型</th>
+                                        <th class="py-3">级别</th>
+                                        <th class="py-3">消息</th>
+                                        <th class="py-3">时间</th>
+                                        <th class="py-3 pe-4 text-end">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- 警报数据将通过JavaScript动态加载 -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="alertsNoData" class="position-absolute top-50 start-50 translate-middle text-center d-none">
+                            <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">暂无警报数据</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入jQuery和Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- 引入Font Awesome图标 -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // 检查用户登录状态
+            checkLoginStatus();
+            
+            // 初始化图表
+            initCharts();
+            
+            // 加载数据
+            loadData();
+            
+            // 设置定时刷新
+            setInterval(loadData, 60000); // 每分钟刷新一次
+            
+            // 登出按钮点击事件
+            $('#logoutBtn').click(function() {
+                localStorage.removeItem('token');
+                window.location.href = '/login.html';
+            });
+        });
+        
+        // 检查登录状态
+        function checkLoginStatus() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            // 解析JWT获取用户信息
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                $('#usernameDisplay').text(payload.username);
+                $('#userAvatar').text(payload.username.charAt(0).toUpperCase());
+            } catch (e) {
+                console.error('解析token失败:', e);
+            }
+        }
+        
+        // 初始化图表
+        function initCharts() {
+            // AQI图表
+            window.aqiChart = new Chart(
+                document.getElementById('aqiChart'),
+                {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: '燃气浓度(ppm)',
+                                data: [],
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                borderWidth: 2,
+                                tension: 0.4,
+                                fill: true
+                            },
+                            {
+                                label: '其他气体(ppm)',
+                                data: [],
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                borderWidth: 2,
+                                tension: 0.4,
+                                fill: true
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    padding: 20,
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: '浓度(ppm)',
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: '监测站点',
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            }
+                        },
+                        layout: {
+                            padding: {
+                                top: 20,
+                                bottom: 30
+                            }
+                        }
+                    }
+                }
+            );
+            
+            // 温湿度图表
+            window.tempHumidityChart = new Chart(
+                document.getElementById('tempHumidityChart'),
+                {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: '温度(°C)',
+                                data: [],
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                borderWidth: 2,
+                                tension: 0.4,
+                                fill: true
+                            },
+                            {
+                                label: '湿度(%)',
+                                data: [],
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                borderWidth: 2,
+                                tension: 0.4,
+                                fill: true
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    padding: 20,
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                title: {
+                                    display: true,
+                                    text: '数值',
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: '监测站点',
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            }
+                        },
+                        layout: {
+                            padding: {
+                                top: 20,
+                                bottom: 30
+                            }
+                        }
+                    }
+                }
+            );
+        }
+        
+        // 加载数据
+        function loadData() {
+            const token = localStorage.getItem('token');
+            
+            // 获取监测数据
+            $.ajax({
+                url: '/api/data/latest',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
+                success: function(data) {
+                    updateCharts(data);
+                },
+                error: function(xhr) {
+                    if (xhr.status === 401) {
+                        window.location.href = '/login.html';
+                    }
+                    console.error('获取监测数据失败:', xhr.responseText);
+                }
+            });
+            
+            // 获取警报数据
+            $.ajax({
+                url: '/api/alerts?resolved=false',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
+                success: function(alerts) {
+                    updateAlertsTable(alerts);
+                },
+                error: function(xhr) {
+                    console.error('获取警报数据失败:', xhr.responseText);
+                }
+            });
+        }
+        
+        // 更新图表数据
+        function updateCharts(data) {
+            // 生成模拟数据
+            const labels = ['站点 1', '站点 2', '站点 3', '站点 4'];
+            const pm25Data = [45, 68, 32, 89]; // 燃气浓度(ppm)
+            const pm10Data = [60, 85, 40, 110]; // 其他气体浓度
+            const tempData = [22.5, 24.8, 21.3, 26.7]; // 温度(°C)
+            const humidityData = [65, 72, 58, 80]; // 湿度(%)
+            
+            // 控制空状态显示
+            $('#aqiNoData').toggleClass('d-none', true);
+            $('#tempHumidityNoData').toggleClass('d-none', true);
+
+            // 确保DOM完全加载
+            $(document).ready(function() {
+                console.log('模拟数据:', {
+                    labels: labels,
+                    pm25Data: pm25Data,
+                    pm10Data: pm10Data,
+                    tempData: tempData,
+                    humidityData: humidityData
+                });
+
+                // 初始化燃气浓度图表
+                const aqiCtx = document.getElementById('aqiChart').getContext('2d');
+                const aqiChart = new Chart(aqiCtx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: '燃气浓度(ppm)',
+                                data: pm25Data,
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                borderWidth: 2,
+                                tension: 0.4,
+                                fill: true
+                            },
+                            {
+                                label: '其他气体(ppm)',
+                                data: pm10Data,
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                borderWidth: 2,
+                                tension: 0.4,
+                                fill: true
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 12
+                                    },
+                                    padding: 20
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: '浓度(ppm)',
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: '监测站点',
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            }
+                        },
+                        layout: {
+                            padding: {
+                                top: 20,
+                                bottom: 30
+                            }
+                        }
+                    }
+                });
+
+                // 初始化温湿度图表
+                const tempCtx = document.getElementById('temperatureChart').getContext('2d');
+                const tempChart = new Chart(tempCtx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: '温度(°C)',
+                                data: tempData,
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                borderWidth: 2,
+                                tension: 0.4,
+                                fill: true
+                            },
+                            {
+                                label: '湿度(%)',
+                                data: humidityData,
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                borderWidth: 2,
+                                tension: 0.4,
+                                fill: true
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 12
+                                    },
+                                    padding: 20
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                title: {
+                                    display: true,
+                                    text: '数值',
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: '监测站点',
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            }
+                        },
+                        layout: {
+                            padding: {
+                                top: 20,
+                                bottom: 30
+                            }
+                        }
+                    }
+                });
+
+                // 手动更新图表
+                aqiChart.update();
+                tempChart.update();
+            });
+            
+                            // 更新AQI图表
+                            window.aqiChart.data.labels = labels;
+                            window.aqiChart.data.datasets[0].data = pm25Data;
+                            window.aqiChart.data.datasets[1].data = pm10Data;
+                            window.aqiChart.options.scales.y.title.text = '浓度(ppm)';
+                            window.aqiChart.options.scales.x.title.text = '监测站点';
+                            window.aqiChart.update();
+                
+                            // 更新温湿度图表
+                            window.tempHumidityChart.data.labels = labels;
+                            window.tempHumidityChart.data.datasets[0].data = tempData;
+                            window.tempHumidityChart.data.datasets[1].data = humidityData;
+                            window.tempHumidityChart.options.scales.y.title.text = '数值';
+                            window.tempHumidityChart.options.scales.x.title.text = '监测站点';
+                            window.tempHumidityChart.update();
+        }
+        
+        // 更新警报表格
+        function updateAlertsTable(alerts) {
+            // 生成模拟警报数据
+            const mockAlerts = [
+                {
+                    id: 1,
+                    station_id: 'S001',
+                    alert_type: '燃气泄漏',
+                    level: 'critical',
+                    message: '检测到高浓度甲烷(CH4)',
+                    timestamp: new Date(Date.now() - 3600000).toISOString(),
+                    resolved: false
+                },
+                {
+                    id: 2,
+                    station_id: 'S003',
+                    alert_type: '高温警报',
+                    level: 'warning',
+                    message: '温度超过阈值(28°C)',
+                    timestamp: new Date(Date.now() - 7200000).toISOString(),
+                    resolved: false
+                },
+                {
+                    id: 3,
+                    station_id: 'S002',
+                    alert_type: '湿度异常',
+                    level: 'warning',
+                    message: '湿度过低(30%)',
+                    timestamp: new Date(Date.now() - 10800000).toISOString(),
+                    resolved: true
+                }
+            ];
+            
+            $('#alertsNoData').toggleClass('d-none', true);
+            const $tbody = $('#alertsTable tbody');
+            $tbody.empty();
+            
+            $('#alertCount').text(mockAlerts.filter(a => !a.resolved).length + ' 条未处理');
+            
+            mockAlerts.forEach(alert => {
+                const statusClass = alert.resolved ? 'text-success' : 
+                                  alert.level === 'critical' ? 'text-danger' : 
+                                  alert.level === 'warning' ? 'text-warning' : 'text-primary';
+                
+                const statusText = alert.resolved ? '已处理' : 
+                                 alert.level === 'critical' ? '严重' : 
+                                 alert.level === 'warning' ? '警告' : '正常';
+                
+                $tbody.append(`
+                    <tr>
+                        <td>${alert.station_id}</td>
+                        <td>${alert.alert_type}</td>
+                        <td><span class="${statusClass}">${statusText}</span></td>
+                        <td>${alert.message}</td>
+                        <td>${new Date(alert.timestamp).toLocaleString()}</td>
+                        <td>
+                            <button class="btn btn-sm ${alert.resolved ? 'btn-success' : 'btn-outline-success'}" 
+                                    onclick="resolveAlert(${alert.id}, this)">
+                                ${alert.resolved ? '已处理' : '标记为已处理'}
+                            </button>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+        
+        // 标记警报为已处理
+        function resolveAlert(alertId, button) {
+            const token = localStorage.getItem('token');
+            
+            $.ajax({
+                url: '/api/alerts/' + alertId,
+                type: 'PUT',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify({
+                    resolved: true
+                }),
+                success: function() {
+                    $(button).removeClass('btn-outline-success').addClass('btn-success').text('已处理');
+                    loadData(); // 刷新数据
+                },
+                error: function(xhr) {
+                    console.error('更新警报状态失败:', xhr.responseText);
+                    alert('更新警报状态失败');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

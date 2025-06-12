@@ -1,0 +1,23 @@
+{
+  "name": "web",
+  "version": "1.0.0",
+  "description": "环境监测与应急通信一体化系统的可视化展示平台，提供实时环境数据监测和应急事件响应能力，提升环境安全和应急管理水平。",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "body-parser": "^2.2.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "react-icons": "^5.5.0",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.18"
+  }
+}
